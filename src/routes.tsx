@@ -17,12 +17,6 @@ const MainRouter = () => {
                 <Link to="/">Home</Link>
             </li>
             <li>
-                <Link to="/video">Video Test</Link>
-            </li>
-            <li>
-                <Link to="/socket">Socket Test</Link>
-            </li>
-            <li>
                 <Link to="/403forbiddena">error</Link>
             </li>
         </nav>

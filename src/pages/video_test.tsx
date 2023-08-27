@@ -1,4 +1,4 @@
-import React, { lazy, useEffect, useRef, useState } from 'react'
+import React, { createElement, lazy, useEffect, useRef, useState } from 'react'
 
 import * as Kalidokit from 'kalidokit'
 import { remap, clamp } from 'kalidokit/dist/utils/helpers';
@@ -27,27 +27,17 @@ const Canvas = lazy(() => import('../components/canvas'))
 
 const VideoTest = () => {
 
-  const myVideoRef = useRef<HTMLVideoElement>(null)
+  const myVideoRef = useRef<HTMLVideoElement>(document.createElement('video'))
   const myCanvasRef = useRef<HTMLCanvasElement>(null)
   const scene = useRef<Scene>(new Scene())
   const currentVrm = useRef<VRM>()
   const oldLookTarget = useRef<THREE.Euler>(new Euler())
+  const streamRef = useRef<MediaStream>()
+  // @ts-ignore
+  const holisticRef = useRef<Holistic>()
 
   const [ value, setValue ] = useState(0)
-  const [ camera, SetCamera ] = useState<Camera>()
 
-  // const getMedia = async () => {
-  //   try {
-  //     // 자신이 원하는 자신의 스트림정보
-  //     const stream = await navigator.mediaDevices.getUserMedia({
-  //       video: true,
-  //       audio: true,
-  //     });
-  //     console.log(stream);
-  //   } catch (e) {
-  //     console.error(e)
-  //   }
-  // }
   // load model
   const threeSetup = async () => {
     // renderer
@@ -75,16 +65,17 @@ const VideoTest = () => {
     // Main Render Loop
     const clock = new Clock();
 
-    function animate() {
-      requestAnimationFrame(animate);
-      
+    async function animate() {
+      if (holisticRef.current)
+        await holisticRef.current.send({image: myVideoRef.current});
       if (currentVrm.current) {
         // Update model to render physics
         currentVrm.current.update(clock.getDelta());
       }
       renderer.render(scene.current, orbitCamera);
+      requestAnimationFrame(animate);
     }
-    animate();
+    await animate();
   }
   const modelLoad = async () => {
     const loader = new GLTFLoader();
@@ -94,7 +85,6 @@ const VideoTest = () => {
       "https://cdn.glitch.com/29e07830-2317-4b15-a044-135e73c7f840%2FAshtra.vrm?v=1630342336981",
       async gltf => {
         await VRMUtils.removeUnnecessaryJoints(gltf.scene);
-
         await VRM.from(gltf).then(vrm => {
           scene.current.add(vrm.scene);
           currentVrm.current = vrm;
@@ -189,7 +179,6 @@ const VideoTest = () => {
   }
   // @ts-ignore
   const onResults: ResultsListener = (results: Results) => {
-    setValue(value + 1)
     if (!(myCanvasRef.current && myVideoRef.current && currentVrm.current)) return
 
     // Take the results from `Holistic` and animate character based on its Face, Pose, and Hand Keypoints.
@@ -210,10 +199,6 @@ const VideoTest = () => {
         runtime:"mediapipe",
         video: myVideoRef.current
       });
-      if (value % 10000 === 0)
-        console.log(faceLandmarks)
-      if (value % 10000 === 0)
-        console.log(riggedFace)
       rigFace(riggedFace)
     }
   
@@ -306,10 +291,9 @@ const VideoTest = () => {
   useEffect(() => {
     // use Mediapipe's webcam utils to send video to holistic every frame
     // getMedia()
-    (async ()=> {
+    (async () => {
       // @ts-ignore
       const holistic = await new Holistic({locateFile: (file) => {
-        console.log(file);
         return `https://cdn.jsdelivr.net/npm/@mediapipe/holistic@0.5.1635989137/${file}`;
       }});
       holistic.setOptions({
@@ -319,42 +303,37 @@ const VideoTest = () => {
         minTrackingConfidence: 0.7,
         refineFaceLandmarks: true,
       });
+      holisticRef.current = holistic
 
       const myCamera = await new Camera(myVideoRef.current!, {
         onFrame: async () => {
-          await holistic.send({image: myVideoRef.current!});
+          // await holistic.send({image: myVideoRef.current!});
         },
         width: 640,
         height: 480
       }) as ExtendedCamera;
       await myCamera.start();
-      // stream
-      console.log(myCamera.g)
+      const stream = myCamera.g
 
-      SetCamera(myCamera)
+      streamRef.current = stream
+      myVideoRef.current.srcObject = stream
 
       // const stream = await navigator.mediaDevices.getUserMedia({
       //   video: true,
       //   audio: true,
       // });
 
-      // if(myVideoRef.current){
-      //   myVideoRef.current.srcObject = stream
-      // }
-
       await modelLoad()
       await threeSetup()
       holistic.onResults(onResults);
     })()
     return (() => {
-      camera?.stop()
     })
   }, [])
   const handleRoomIDSubmit = (e: React.MouseEvent<HTMLElement>) => {
     e.preventDefault()
   }
   return (<>
-    <video ref={myVideoRef}></video>
     <canvas ref={myCanvasRef}></canvas>
     <div>kalido video test</div>
     <button onClick={handleRoomIDSubmit}>rest</button>

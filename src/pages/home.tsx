@@ -15,8 +15,8 @@ const Home = () => {
   }, [])
   return (<>
     <form onSubmit={handleRoomIDSubmit}>
-      <input type="text" ref={roomIDRef} />
-      <input type="submit" value='roomに入る'/>
+      <input className='textInput' type="text" ref={roomIDRef} />
+      <input className="submitButton" type="submit" value='enter room'/>
     </form>
   <div children='homeです'></div>
   </>)
