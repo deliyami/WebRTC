@@ -5,6 +5,7 @@ const Home = lazy(() => import('./pages/home'))
 const ErrorPage = lazy(() => import('./pages/error_page'))
 const ChatPage = lazy(() => import('./pages/chat'))
 const SocketTest = lazy(() => import('./pages/socket_test'))
+const VideoTest = lazy(() => import('./pages/video_test'))
 
 const MainRouter = () => {
   // const { roomID, setRoomID } = useState<string>('')
@@ -16,7 +17,10 @@ const MainRouter = () => {
                 <Link to="/">Home</Link>
             </li>
             <li>
-                <Link to="/socket">Socket</Link>
+                <Link to="/video">Video Test</Link>
+            </li>
+            <li>
+                <Link to="/socket">Socket Test</Link>
             </li>
             <li>
                 <Link to="/403forbiddena">error</Link>
@@ -27,6 +31,7 @@ const MainRouter = () => {
               <Route path="/" element={<Home/>}></Route>
               <Route path="/chat/:roomID" element={<ChatPage/>}></Route>
               <Route path="/socket" element={<SocketTest/>}></Route>
+              <Route path="/video" element={<VideoTest/>}></Route>
               <Route path="/*" element={<ErrorPage/>}></Route>
             </Routes>
         </Suspense>

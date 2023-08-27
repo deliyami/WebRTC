@@ -4,9 +4,9 @@ interface videoProps {
   videoRef: React.RefObject<HTMLVideoElement>
 }
 
-const Video = (props : videoProps) => {
+const Canvas = (props : videoProps) => {
   return (<>
     <video className='video' ref={props.videoRef} autoPlay />
   </>)
 }
-export default Video;
+export default Canvas;

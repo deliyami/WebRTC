@@ -2,7 +2,7 @@ import React, { lazy, useRef, useEffect } from 'react'
 import socketIOClient, { Socket } from 'socket.io-client'
 import { Router, Link, useParams } from 'react-router-dom'
 
-const Video = lazy(() => import('../components/video'))
+const Canvas = lazy(() => import('../components/canvas'))
 
 const SOCKET_URL = `${process.env.REACT_APP_BACKEND_HOST}:${process.env.REACT_APP_BACKEND_PORT}`
 
@@ -31,7 +31,7 @@ const Chat = () => {
         video: true,
         audio: true,
       });
-
+      console.log(stream);
       myStream.current = stream
       
       if(myVideoRef.current){
@@ -200,10 +200,10 @@ const Chat = () => {
         </tr>
         <tr>
           <td>
-            <Video videoRef={myVideoRef} />
+            <Canvas videoRef={myVideoRef} />
           </td>
           <td>
-            <Video videoRef={remoteVideoRef} />
+            <Canvas videoRef={remoteVideoRef} />
           </td>
         </tr>
       </tbody>
