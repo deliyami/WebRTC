@@ -7,6 +7,7 @@
     "@mediapipe/drawing_utils": "^0.3.1675466124",
     "@mediapipe/face_mesh": "^0.4.1633559619",
     "@mediapipe/holistic": "^0.5.1675471629",
+    "@pixiv/three-vrm": "^0.6.7",
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
@@ -14,6 +15,7 @@
     "@types/node": "^16.18.40",
     "@types/react": "^18.2.20",
     "@types/react-dom": "^18.2.7",
+    "@types/three": "0.131.0",
     "dotenv": "^16.3.1",
     "kalidokit": "^1.1.5",
     "react": "^18.2.0",
@@ -21,7 +23,9 @@
     "react-router-dom": "^6.15.0",
     "react-scripts": "5.0.1",
     "socket.io-client": "^4.7.2",
+    "three": "0.133.0",
     "typescript": "^4.9.5",
+    "vite": "^4.4.9",
     "web-vitals": "^2.1.4"
   },
   "scripts": {

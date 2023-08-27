@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from "react-router-dom"
 import { useRef } from 'react'
 
@@ -10,6 +10,9 @@ const Home = () => {
     const roomID = roomIDRef.current?.value
     if (roomID) navigate(`chat/${roomID}`)
   }
+  useEffect(() => {
+    console.log(window);
+  }, [])
   return (<>
     <form onSubmit={handleRoomIDSubmit}>
       <input type="text" ref={roomIDRef} />

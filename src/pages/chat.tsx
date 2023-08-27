@@ -16,12 +16,22 @@ const Chat = () => {
   // 다른사람의 비디오
   const remoteVideoRef = useRef<HTMLVideoElement>(null)
   // peerConnection
-  const peerRef = useRef<RTCPeerConnection>()
+  const peerRef = useRef<RTCPeerConnection>(new RTCPeerConnection({
+    iceServers: [
+      {
+        urls: 'stun:stun.l.google.com:19302',
+      },
+    ],
+  }))
+  console.log(peerRef.current);
+  const dataChannelRef = useRef<RTCDataChannel>()
   const { roomID } = useParams();
 
   const checkData = (e: any) => {
     e.preventDefault()
-    console.log(socketRef);
+    console.log(dataChannelRef.current?.readyState);
+    dataChannelRef.current?.send('hello, world!')
+    // dataChannelRef.current = peerRef.current!.createDataChannel("ChatRoom")
   }
 
   const getMedia = async () => {
@@ -40,13 +50,7 @@ const Chat = () => {
 
       if (!peerRef.current) return
       // 스트림을 peerConnection에 등록
-      stream.getTracks().forEach((track) => {
-
-        if (!peerRef.current) {
-          return;
-        }
-        peerRef.current.addTrack(track, stream);
-      });
+      peerRef.current.addTrack(stream.getTracks()[0])
 
       // iceCandidate 이벤트 
       peerRef.current.onicecandidate = (e) => {
@@ -58,26 +62,43 @@ const Chat = () => {
           console.log('receive candidate');
           socketRef.current.emit('candidate', e.candidate, roomID);
         }
+        // dataChannel.send('hello, world!')
+        console.log('ok candidate')
       };
+      console.log('set peer data channel handler');
+      peerRef.current.ondatachannel = (e: RTCDataChannelEvent) => {
+        console.log('try peer data channel', e);
+        dataChannelRef.current = e.channel
+        dataChannelRef.current.onmessage = (e) => {
+          console.log('got data channel message', e.data);
+        }
+        dataChannelRef.current.onopen = () => {
+          console.log('open channel');
+        }
+      }
 
       // 구 addStream 현 track 이벤트 
       peerRef.current.ontrack = (e) => {
-        console.log('?');
+        console.log('wow');
         if (remoteVideoRef.current) {
           remoteVideoRef.current.srcObject = e.streams[0];
         }
-      };   
+      }
     } catch (e) {
       console.error(e)
     }
-    // 마운트시 해당 방의 roomID을 서버에 전달
-    socketRef.current!.emit('join_room', {
-      room: roomID,
-    });
   }
 
   const createOffer = async () => {
     console.log('create Offer');
+    dataChannelRef.current = peerRef.current!.createDataChannel("ChatRoom")
+    dataChannelRef.current.onmessage = (e) => {
+      console.log('got data channel message', e.data);
+    }
+    dataChannelRef.current.onopen = () => {
+      console.log('open channel');
+    }
+    
     if (!(peerRef.current && socketRef.current)) {
       return;
     }
@@ -98,6 +119,7 @@ const Chat = () => {
   const createAnswer = async (sdp: RTCSessionDescription) => {
     // sdp : PeerA에게서 전달받은 offer
     console.log('create Answer');
+    
     if (!(peerRef.current && socketRef.current)) {
       return;
     }
@@ -120,58 +142,57 @@ const Chat = () => {
   };
 
   useEffect(() => {
-    if (socketRef.current) return
-    // 소켓 연결
-    socketRef.current = socketIOClient(SOCKET_URL)
-    peerRef.current = new RTCPeerConnection({
-      iceServers: [
-        {
-          urls: 'stun:stun.l.google.com:19302',
-        },
-      ],
-    })
-    	
-    // 기존 유저가 있고, 새로운 유저가 들어왔다면 오퍼생성
-    socketRef.current.on('all_users', (allUsers: Array<{ id: string }>) => {
-      console.log('hello, new User!');
-      if (allUsers.length > 0) {
-        createOffer();
-      }
-    });
-	
-    // offer를 전달받은 PeerB만 해당됩니다
-    // offer를 들고 만들어둔 answer 함수 실행
-    socketRef.current.on('getOffer', (sdp: RTCSessionDescription) => {
-      console.log('receive Offer');
-      console.log('another user offer', sdp);
-      createAnswer(sdp);
-    });
+    (async () => {
+      
+      if (socketRef.current) return
+      // 소켓 연결
+      await getMedia()
+      socketRef.current = socketIOClient(SOCKET_URL)
+      // 마운트시 해당 방의 roomID을 서버에 전달
+      socketRef.current!.emit('join_room', {
+        room: roomID,
+      });
+        
+      // 기존 유저가 있고, 새로운 유저가 들어왔다면 오퍼생성
+      socketRef.current.on('all_users', (allUsers: Array<{ id: string }>) => {
+        console.log('hello, new User!');
+        if (allUsers.length > 0) {
+          createOffer();
+        }
+      });
     
-    // answer를 전달받을 PeerA만 해당됩니다.
-    // answer를 전달받아 PeerA의 RemoteDescription에 등록
-    socketRef.current.on('getAnswer', (sdp: RTCSessionDescription) => {
-      console.log('receive Answer');
-      console.log('another user offer', sdp);
-      if (!peerRef.current) {
-        return;
-      }
-      peerRef.current.setRemoteDescription(sdp);
-    });
-    
-    // 서로의 candidate를 전달받아 등록
-    socketRef.current.on('getCandidate', async (candidate: RTCIceCandidate) => {
-      if (!peerRef.current) {
-        return;
-      }
-      console.log('get candidate')
-      await peerRef.current.addIceCandidate(candidate);
-    });
+      // offer를 전달받은 PeerB만 해당됩니다
+      // offer를 들고 만들어둔 answer 함수 실행
+      socketRef.current.on('getOffer', (sdp: RTCSessionDescription) => {
+        console.log('receive Offer');
+        console.log('another user offer', sdp);
+        createAnswer(sdp);
+      });
+      
+      // answer를 전달받을 PeerA만 해당됩니다.
+      // answer를 전달받아 PeerA의 RemoteDescription에 등록
+      socketRef.current.on('getAnswer', (sdp: RTCSessionDescription) => {
+        console.log('receive Answer');
+        console.log('another user offer', sdp);
+        if (!peerRef.current) {
+          return;
+        }
+        peerRef.current.setRemoteDescription(sdp);
+      });
+      
+      // 서로의 candidate를 전달받아 등록
+      socketRef.current.on('getCandidate', async (candidate: RTCIceCandidate) => {
+        if (!peerRef.current) {
+          return;
+        }
+        console.log('get candidate')
+        await peerRef.current.addIceCandidate(candidate);
+      });
 
-    socketRef.current.on('user_exit', async () => {
-      console.log('user exit')
-    })
-	
-    getMedia()
+      socketRef.current.on('user_exit', async () => {
+        console.log('user exit')
+      })
+    })()
 
     return () => {
       // 언마운트시 socket disconnect
