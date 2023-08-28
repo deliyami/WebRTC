@@ -22,7 +22,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 
 const Canvas = lazy(() => import('../components/canvas'))
 
-const SOCKET_URL = `http://${process.env.REACT_APP_BACKEND_HOST}:${process.env.REACT_APP_BACKEND_PORT}/app`
+const SOCKET_URL = `${process.env.REACT_APP_BACKEND_HOST}:${process.env.REACT_APP_BACKEND_PORT}`
 
 const Chat = () => {
     // 소켓정보를 담을 Ref
@@ -684,7 +684,7 @@ const Chat = () => {
     (async () => {
       
       if (socketRef.current) return
-      socketRef.current = socketIOClient(SOCKET_URL)
+      socketRef.current = socketIOClient(SOCKET_URL, {secure: true})
       // media setting 
       await setMedia()
 

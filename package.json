@@ -30,7 +30,7 @@
   },
   "scripts": {
     "start": "export PORT=7070 && react-scripts start",
-    "build": "react-scripts build",
+    "build": "HTTPS=true react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
