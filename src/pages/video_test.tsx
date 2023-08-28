@@ -318,11 +318,6 @@ const VideoTest = () => {
       streamRef.current = stream
       myVideoRef.current.srcObject = stream
 
-      // const stream = await navigator.mediaDevices.getUserMedia({
-      //   video: true,
-      //   audio: true,
-      // });
-
       await modelLoad()
       await threeSetup()
       holistic.onResults(onResults);

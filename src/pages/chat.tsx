@@ -120,8 +120,8 @@ const Chat = () => {
         },
         width: 640,
         height: 480
-      }) as ExtendedCamera;
-      await myCamera.start();
+      }) as ExtendedCamera
+      await myCamera.start()
       const stream = myCamera.g
       
       streamRef.current = stream
