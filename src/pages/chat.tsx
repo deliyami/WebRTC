@@ -85,18 +85,17 @@ const Chat = () => {
       myVrmRef.current.update(myClockRef.current.getDelta());
     }
     myRendererRef.current.render(mySceneRef.current, myOrbitCameraRef.current);
-
+    remoteAnimate()
     requestAnimationFrame(myAnimate)
   }
-  const remoteAnimate = () => {
-    console.log('remote animate');
+  const remoteAnimate = async () => {
     if (remoteResultsRef.current) remoteResults(remoteResultsRef.current)
     
     if (!(remoteClockRef.current && remoteRendererRef.current && remoteOrbitCameraRef.current)) return
     if (remoteVrmRef.current) {
-      remoteVrmRef.current.update(remoteClockRef.current.getDelta());
+      await remoteVrmRef.current.update(remoteClockRef.current.getDelta());
     }
-    remoteRendererRef.current.render(remoteSceneRef.current, remoteOrbitCameraRef.current);
+    await remoteRendererRef.current.render(remoteSceneRef.current, remoteOrbitCameraRef.current);
   }
   
   const setMedia = async () => {
@@ -702,9 +701,6 @@ const Chat = () => {
       
       holisticRef.current.onResults(onResults);
       setSuccessMyCanvas(true)
-      setInterval(() => {
-        remoteAnimate()
-      }, 300);
     })()
 
     return () => {
